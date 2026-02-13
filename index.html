@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PULSE | ARCHIVE v45</title>
+    <title>PULSE | ARCHIVE v47</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap');
@@ -17,7 +17,7 @@
 
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .sidebar-wide { width: 460px; }
-        .content-slim { flex: 1; max-width: 880px; height: 85vh; } /* Fixed Height for Main Content */
+        .content-slim { flex: 1; max-width: 880px; height: 85vh; }
 
         .lvl-card { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
         .lvl-card:hover { background: rgba(0, 255, 255, 0.08); transform: translateX(10px); }
@@ -28,15 +28,14 @@
         .page-active { display: flex; animation: pEnter 0.5s ease-out; }
         @keyframes pEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* STRICT STAFF UI */
         .staff-only { display: none !important; }
-        .is-staff .staff-only { display: flex !important; }
+        body.is-staff .staff-only { display: flex !important; }
+        body.is-staff button.staff-only { display: block !important; }
         
-        /* SCROLL FIXES */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        
-        /* The specific fix for the Victor Box */
-        #v-victors-container { max-height: 300px; overflow-y: auto; }
+        #v-victors-container { max-height: 320px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -54,7 +53,7 @@
                 <div id="music-info" class="text-[8px] font-black uppercase opacity-50 italic">Visualizer</div>
                 <button onclick="playNext()" class="text-xs">⏭</button>
             </div>
-            <button onclick="toggleStaff()" id="staff-indicator" class="w-3 h-3 rounded-full bg-white/10 border border-white/20"></button>
+            <button onclick="toggleStaff()" id="staff-indicator" class="w-3 h-3 rounded-full bg-white/10 border border-white/20 transition-all duration-500"></button>
         </div>
     </nav>
 
@@ -69,7 +68,6 @@
 
         <main class="content-slim glass rounded-[3rem] p-8 flex flex-col relative overflow-hidden">
             <div id="viewer-empty" class="m-auto opacity-5 font-black italic text-7xl uppercase">Pulse</div>
-            
             <div id="viewer-content" class="hidden flex-1 flex flex-col overflow-y-auto pr-4 custom-scroll">
                 <div id="v-video-wrap" class="w-full aspect-video shadow-2xl rounded-[2rem] overflow-hidden bg-black mb-8 flex-shrink-0"></div>
                 
@@ -78,13 +76,13 @@
                         <h2 id="v-title" class="text-6xl font-black italic uppercase tracking-tighter"></h2>
                         <div class="flex items-center gap-3 mt-2">
                             <img id="v-ver-icon" class="player-icon !w-8 !h-8">
-                            <span class="opacity-40 uppercase text-[9px] font-black">Verifier: <span id="v-ver" class="text-white"></span></span>
+                            <span class="opacity-40 uppercase text-[9px] font-black">Verified by <span id="v-ver" class="text-white"></span></span>
                         </div>
                     </div>
                     <div class="text-right">
                         <span class="text-cyan-400 font-black text-4xl italic" id="v-pts"></span>
                         <div class="staff-only mt-4">
-                            <button onclick="deleteCurrentLevel()" class="text-[8px] font-black text-red-500 uppercase">Delete Level</button>
+                            <button onclick="deleteCurrentLevel()" class="text-[8px] font-black text-red-500 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-lg">Delete Level</button>
                         </div>
                     </div>
                 </div>
@@ -101,11 +99,11 @@
     </div>
 
     <div id="page-leaderboard" class="page flex-col items-center overflow-y-auto custom-scroll">
-        <h2 class="text-6xl font-black italic uppercase mb-12">Leaderboard</h2>
+        <h2 class="text-6xl font-black italic uppercase mb-12 tracking-tighter">Leaderboard</h2>
         <div id="lb-content" class="w-full max-w-2xl space-y-3"></div>
     </div>
 
-    <div id="review-modal" class="fixed inset-0 bg-black/98 hidden z-[700] flex items-center justify-center p-6">
+    <div id="review-modal" class="fixed inset-0 bg-black/98 hidden z-[700] flex items-center justify-center p-6 backdrop-blur-xl">
         <div class="glass p-12 rounded-[4rem] w-full max-w-lg text-center">
             <h2 class="text-2xl font-black italic uppercase mb-2">Final Approval</h2>
             <p id="review-desc" class="text-[11px] opacity-40 uppercase mb-8"></p>
@@ -113,7 +111,6 @@
             <label class="block bg-white/5 p-12 border border-dashed border-white/20 rounded-[2rem] cursor-pointer hover:bg-white/10 transition mb-8">
                 <input type="file" class="hidden" onchange="handleFile(this, 'staff-icon-pick')">
                 <span class="text-[10px] font-black uppercase block">Assign Player Icon</span>
-                <span class="text-[8px] opacity-30 mt-2 block">Choose the icon for this player</span>
             </label>
             
             <div id="p-staff-icon-preview" class="flex justify-center mb-8 hidden">
@@ -121,7 +118,7 @@
             </div>
 
             <div class="flex gap-4">
-                <button onclick="confirmFinalApproval()" class="flex-1 bg-green-500 text-black p-5 rounded-2xl font-black uppercase italic">Publish to Archive</button>
+                <button onclick="confirmFinalApproval()" class="flex-1 bg-green-500 text-black p-5 rounded-2xl font-black uppercase italic">Publish</button>
                 <button onclick="toggleModal('review-modal')" class="p-5 text-[9px] font-black opacity-30">Back</button>
             </div>
         </div>
@@ -131,13 +128,13 @@
         <div class="glass p-12 rounded-[3.5rem] w-full max-w-xl">
             <h2 id="sub-modal-title" class="text-3xl font-black italic uppercase mb-8">Submission</h2>
             <div id="sub-fields" class="space-y-4"></div>
-            <button onclick="sendToQueue()" class="w-full bg-white text-black font-black p-5 rounded-2xl uppercase italic mt-6">Send to Staff Review</button>
-            <button onclick="toggleModal('submit-modal')" class="w-full mt-4 text-[9px] font-black opacity-30">CANCEL</button>
+            <button onclick="sendToQueue()" class="w-full bg-white text-black font-black p-5 rounded-2xl uppercase italic mt-6">Submit to Staff</button>
+            <button onclick="toggleModal('submit-modal')" class="w-full mt-4 text-[9px] font-black opacity-30 uppercase">Cancel</button>
         </div>
     </div>
 
     <div id="page-pending" class="page flex-col items-center overflow-y-auto custom-scroll">
-        <h2 class="text-5xl font-black italic uppercase mb-12">Queue</h2>
+        <h2 class="text-5xl font-black italic uppercase mb-12">Staff Queue</h2>
         <div id="pending-list" class="w-full max-w-3xl space-y-4"></div>
     </div>
 
@@ -152,7 +149,37 @@
         let db = { levels: [], profiles: {}, playlist: [], pending: [] };
         let isStaff = false, activeIdx = null, currentSub = null, tempIcon, tempThumb, currentTrack = 0;
 
-        // VISUALIZER
+        // --- SESSION PERSISTENCE ---
+        function checkStaffSession() {
+            if (sessionStorage.getItem('pulse_staff') === 'active') {
+                activateStaffMode();
+            }
+        }
+
+        function toggleStaff() {
+            if (isStaff) {
+                if (confirm("Logout of Staff Mode?")) {
+                    sessionStorage.removeItem('pulse_staff');
+                    location.reload();
+                }
+            } else {
+                if (prompt("ENTER STAFF KEY:") === STAFF_PASS) {
+                    sessionStorage.setItem('pulse_staff', 'active');
+                    activateStaffMode();
+                    alert("Staff Mode: Persistent Session Active.");
+                }
+            }
+        }
+
+        function activateStaffMode() {
+            isStaff = true;
+            document.body.classList.add('is-staff');
+            document.getElementById('staff-indicator').classList.add('bg-cyan-500', 'border-cyan-400', 'shadow-[0_0_15px_rgba(0,255,255,0.5)]');
+            renderLeaderboard();
+            if(activeIdx !== null) renderVictors(activeIdx);
+        }
+
+        // --- VISUALIZER ---
         let audioCtx, analyser, dataArray;
         window.addEventListener('mousemove', e => {
             document.documentElement.style.setProperty('--x', e.clientX + 'px');
@@ -184,17 +211,19 @@
                 const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": MASTER_KEY } });
                 const data = await res.json();
                 db = data.record;
+                checkStaffSession(); // Check session AFTER DB loads
                 renderSidebar();
                 document.body.addEventListener('click', () => { initVis(); if(db.playlist.length) playTrack(0); }, {once: true});
-            } catch(e) { console.error("Sync Error"); }
+            } catch(e) { console.error("Database Connection Failed."); }
         }
 
         async function sync() {
+            if(!isStaff) return alert("Unauthorized Action.");
             await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: 'PUT', headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY }, body: JSON.stringify(db) });
-            location.reload();
+            location.reload(); // Page reloads but checkStaffSession() will keep you logged in.
         }
 
-        // --- SUBMISSION ---
+        // --- SUBMISSION & REVIEW ---
         function openSubmitModal(type) {
             currentSub = type;
             const fields = document.getElementById('sub-fields');
@@ -206,7 +235,7 @@
             toggleModal('submit-modal');
         }
 
-        function sendToQueue() {
+        async function sendToQueue() {
             let data = { type: currentSub };
             if(currentSub === 'level') {
                 data.name = document.getElementById('in-l-n').value;
@@ -221,21 +250,22 @@
                 data.levelName = db.levels[activeIdx].name;
             }
             db.pending.push(data);
-            sync();
+            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: 'PUT', headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY }, body: JSON.stringify(db) });
+            location.reload();
         }
 
-        // --- STAFF REVIEW ---
         function startReview(idx) {
+            if(!isStaff) return;
             currentSub = idx;
             const item = db.pending[idx];
-            document.getElementById('review-desc').innerText = `Approving ${item.name} for ${item.type === 'level' ? 'New Entry' : item.levelName}`;
+            document.getElementById('review-desc').innerText = `Approving ${item.name}`;
             toggleModal('review-modal');
         }
 
         async function confirmFinalApproval() {
+            if(!isStaff) return;
             const item = db.pending[currentSub];
             if(tempIcon) db.profiles[item.name] = tempIcon;
-            
             if(item.type === 'level') {
                 db.levels.push({ name: item.name, ver: item.name, pts: item.pts, ytId: item.yt, thumb: item.thumb, victors: [] });
             } else {
@@ -247,17 +277,13 @@
             await sync();
         }
 
-        // --- FIXED LEADERBOARD & RENDER ---
+        // --- RENDERING ---
         function renderLeaderboard() {
             const scores = {};
             db.levels.forEach(lvl => {
                 const pts = parseInt(lvl.pts) || 0;
-                // Add points for verifier
                 scores[lvl.ver] = (scores[lvl.ver] || 0) + pts;
-                // Add points for each victor
-                lvl.victors.forEach(v => {
-                    scores[v] = (scores[v] || 0) + pts;
-                });
+                lvl.victors.forEach(v => scores[v] = (scores[v] || 0) + pts);
             });
             const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
             document.getElementById('lb-content').innerHTML = sorted.map(([name, pts], i) => `
@@ -266,8 +292,17 @@
                     <img src="${db.profiles[name] || ''}" class="player-icon">
                     <span class="text-lg font-black uppercase flex-1 italic">${name}</span>
                     <span class="text-cyan-400 font-black text-xl italic">${pts} PTS</span>
-                    <button onclick="removePlayerFromLB('${name}')" class="staff-only text-red-500 font-black text-[9px]">✕</button>
+                    ${isStaff ? `<button onclick="removePlayerFromLB('${name}')" class="text-red-500 font-black text-[9px]">✕</button>` : ''}
                 </div>`).join('');
+        }
+
+        function renderVictors(idx) {
+            document.getElementById('v-victors').innerHTML = db.levels[idx].victors.map((v, i) => `
+                <div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
+                    <img src="${db.profiles[v] || ''}" class="player-icon !w-6 !h-6">
+                    <span class="text-[10px] font-black uppercase flex-1">${v}</span>
+                    ${isStaff ? `<button onclick="removeVictor(${i})" class="text-red-500">✕</button>` : ''}
+                </div>`).join('') || '<p class="opacity-10 text-[10px]">No records yet</p>';
         }
 
         function showLvl(idx) {
@@ -280,9 +315,6 @@
             document.getElementById('v-video-wrap').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${l.ytId}" frameborder="0" allowfullscreen></iframe>`;
             document.getElementById('v-ver-icon').src = db.profiles[l.ver] || '';
             renderVictors(idx);
-            // Reset scroll to top when changing levels
-            document.getElementById('viewer-content').scrollTop = 0;
-            document.getElementById('v-victors-container').scrollTop = 0;
         }
 
         function renderSidebar() {
@@ -293,16 +325,8 @@
                 </div>`).join('');
         }
 
-        function renderVictors(idx) {
-            document.getElementById('v-victors').innerHTML = db.levels[idx].victors.map((v, i) => `
-                <div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
-                    <img src="${db.profiles[v] || ''}" class="player-icon !w-6 !h-6">
-                    <span class="text-[10px] font-black uppercase flex-1">${v}</span>
-                    <button onclick="removeVictor(${i})" class="staff-only text-red-500">✕</button>
-                </div>`).join('') || '<p class="opacity-10 text-[10px]">No records yet</p>';
-        }
-
         function renderPending() {
+            if(!isStaff) return;
             document.getElementById('pending-list').innerHTML = db.pending.map((p, i) => `
                 <div class="glass p-8 rounded-[2.5rem] flex justify-between items-center">
                     <div>
@@ -311,7 +335,7 @@
                     </div>
                     <div class="flex gap-4">
                         <button onclick="startReview(${i})" class="bg-green-500 text-black px-6 py-3 rounded-xl font-black text-[9px]">REVIEW</button>
-                        <button onclick="db.pending.splice(${i},1);sync()" class="text-red-500 font-black text-[9px]">DENY</button>
+                        <button onclick="if(confirm('Deny?')){db.pending.splice(${i},1);sync();}" class="text-red-500 font-black text-[9px]">DENY</button>
                     </div>
                 </div>`).join('');
         }
@@ -340,22 +364,16 @@
         }
 
         function playTrack(idx) {
-            currentTrack = idx;
-            const track = db.playlist[idx];
+            currentTrack = idx; const track = db.playlist[idx];
             document.getElementById('music-info').innerText = `Track ${idx + 1}`;
-            const audio = document.getElementById('global-audio');
-            audio.volume = 0.2;
+            const audio = document.getElementById('global-audio'); audio.volume = 0.2;
             if(track.includes('youtube')) {
                 const id = track.match(/([\w\-]{11})/)[0];
                 document.getElementById('yt-host').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}" allow="autoplay"></iframe>`;
-            } else {
-                audio.src = track;
-                audio.play();
-            }
+            } else { audio.src = track; audio.play(); }
         }
 
         function playNext() { currentTrack = (currentTrack + 1) % db.playlist.length; playTrack(currentTrack); }
-        function toggleStaff() { if(prompt("CODE:") === STAFF_PASS) { isStaff = true; document.body.classList.add('is-staff'); } }
         function nav(p) { 
             document.querySelectorAll('.page').forEach(pg => pg.classList.remove('page-active'));
             document.getElementById('page-'+p).classList.add('page-active');
@@ -363,9 +381,9 @@
             if(p === 'leaderboard') renderLeaderboard();
         }
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        function deleteCurrentLevel() { if(confirm("Delete level?")) { db.levels.splice(activeIdx, 1); sync(); } }
-        function removeVictor(idx) { if(confirm("Remove victor?")) { db.levels[activeIdx].victors.splice(idx, 1); sync(); } }
-        function removePlayerFromLB(name) { if(confirm("Delete player?")) { db.levels.forEach(l => l.victors = l.victors.filter(v => v !== name)); delete db.profiles[name]; sync(); } }
+        function deleteCurrentLevel() { if(isStaff && confirm("Delete level?")) { db.levels.splice(activeIdx, 1); sync(); } }
+        function removeVictor(idx) { if(isStaff && confirm("Remove victor?")) { db.levels[activeIdx].victors.splice(idx, 1); sync(); } }
+        function removePlayerFromLB(name) { if(isStaff && confirm("Delete player?")) { db.levels.forEach(l => l.victors = l.victors.filter(v => v !== name)); delete db.profiles[name]; sync(); } }
 
         loadDB(); nav('list');
     </script>
