@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PULSE | ARCHIVE v37</title>
+    <title>PULSE | ARCHIVE v38</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap');
@@ -24,6 +24,7 @@
 </head>
 <body>
     <div id="bg-glow"></div>
+    
     <nav class="fixed top-0 left-0 w-full p-8 flex justify-between items-center z-[150]">
         <div onclick="nav('list')" class="text-2xl font-black italic tracking-tighter cursor-pointer">PULSE.</div>
         <div class="flex gap-8">
@@ -32,8 +33,8 @@
         </div>
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-3 glass px-4 py-2 rounded-full border-white/10">
-                <div id="music-status" class="text-[8px] font-black uppercase opacity-40 italic">No Audio</div>
-                <button onclick="toggleMusic()" class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px]">⏯</button>
+                <div id="music-display" class="text-[8px] font-black uppercase opacity-40 italic">Playlist Empty</div>
+                <button onclick="nextTrack()" class="text-[10px] opacity-60 hover:opacity-100">⏭</button>
                 <button onclick="openMusicModal()" class="staff-only w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px]">⚙</button>
             </div>
             <button onclick="toggleStaff()" id="staff-indicator" class="w-3 h-3 rounded-full bg-white/10 border border-white/20"></button>
@@ -48,10 +49,11 @@
             </div>
             <div id="sidebar-content" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll"></div>
         </aside>
+
         <main class="flex-1 glass rounded-[3rem] p-8 flex flex-col overflow-hidden relative">
             <div id="viewer-empty" class="m-auto opacity-10 font-black italic text-6xl uppercase">Pulse Archive</div>
             <div id="viewer-content" class="hidden h-full flex flex-col overflow-y-auto pr-4 custom-scroll">
-                <div id="v-video-container" class="w-full max-w-5xl mx-auto mb-8 aspect-video shadow-2xl rounded-3xl overflow-hidden"></div>
+                <div id="v-video-container" class="w-full max-w-5xl mx-auto mb-8 aspect-video shadow-2xl rounded-3xl overflow-hidden bg-black"></div>
                 <div class="flex gap-10 max-w-5xl mx-auto w-full">
                     <div class="flex-1">
                         <h2 id="v-title" class="text-6xl font-black italic uppercase tracking-tighter mb-4"></h2>
@@ -60,12 +62,17 @@
                             <span class="opacity-40 uppercase text-[10px] font-bold italic">Verified by <span id="v-ver" class="text-white font-black"></span></span>
                             <span class="text-cyan-400 font-black text-2xl ml-auto" id="v-pts"></span>
                         </div>
-                        <div class="glass p-8 rounded-[2.5rem]">
-                            <h3 class="text-[10px] font-black uppercase text-cyan-400 mb-4">Submit Record</h3>
-                            <div class="flex gap-4">
-                                <input id="sub-name" placeholder="Username" class="flex-1 bg-white/5 border border-white/10 p-4 rounded-2xl text-xs outline-none focus:border-cyan-500">
-                                <button onclick="openVictorModal()" class="bg-white text-black px-8 font-black uppercase text-[10px] rounded-2xl">Submit</button>
+                        
+                        <div class="glass p-8 rounded-[2.5rem] border-white/5">
+                            <h3 class="text-[10px] font-black uppercase text-cyan-400 mb-4 tracking-widest">Submit New Victor</h3>
+                            <div class="flex gap-4 items-center">
+                                <input id="vic-name-input" placeholder="Player Username" class="flex-1 bg-white/5 border border-white/10 p-4 rounded-2xl text-xs outline-none">
+                                <label class="bg-white/10 px-4 py-4 rounded-2xl cursor-pointer text-[9px] font-black uppercase hover:bg-white/20">
+                                    <input type="file" class="hidden" onchange="handleFile(this, 'vic-icon')"> Icon
+                                </label>
+                                <button onclick="addVictorDirect()" class="bg-white text-black px-8 py-4 font-black uppercase text-[10px] rounded-2xl hover:bg-cyan-400 transition">Add Victor</button>
                             </div>
+                            <p id="vic-error" class="text-[9px] text-red-500 font-bold mt-2 uppercase hidden">Player already beaten this level!</p>
                         </div>
                     </div>
                     <div class="w-80">
@@ -85,34 +92,42 @@
     </div>
 
     <div id="music-modal" class="fixed inset-0 bg-black/95 hidden z-[500] flex items-center justify-center p-6 backdrop-blur-xl">
-        <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center">
-            <h2 class="text-2xl font-black italic uppercase mb-8 tracking-tighter">Global Music</h2>
-            <input id="music-yt" placeholder="PASTE YOUTUBE URL" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl mb-4 outline-none text-cyan-400">
-            <div class="text-[9px] opacity-20 uppercase font-black mb-4">OR UPLOAD FILE</div>
-            <label class="block bg-white/10 p-4 rounded-xl border border-dashed border-white/20 text-[10px] mb-8 cursor-pointer font-bold uppercase hover:bg-white/20">
-                <input type="file" id="music-upload" class="hidden" onchange="handleMusicUpload(this)">
-                Pick MP3/OGG File
-            </label>
-            <button onclick="saveMusic()" class="w-full bg-cyan-500 text-black p-4 rounded-2xl font-black uppercase italic shadow-lg shadow-cyan-500/20">Set Global Audio</button>
-            <button onclick="toggleModal('music-modal')" class="mt-4 text-[9px] opacity-30 uppercase">Cancel</button>
+        <div class="glass p-10 rounded-[4rem] w-full max-w-2xl flex flex-col max-h-[80vh]">
+            <h2 class="text-2xl font-black italic uppercase mb-6 tracking-tighter">Music Management</h2>
+            
+            <div class="flex-1 overflow-y-auto custom-scroll pr-4 mb-6">
+                <div id="playlist-items" class="space-y-2 mb-6"></div>
+                <div class="glass p-6 rounded-3xl border-white/10">
+                    <p class="text-[9px] font-black opacity-30 uppercase mb-4">Add New Track</p>
+                    <input id="music-input-url" placeholder="YouTube URL or Direct MP3 Link" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl mb-4 text-xs outline-none">
+                    <div class="flex gap-2">
+                        <button onclick="previewMusicTrack()" class="flex-1 bg-white/10 text-[10px] font-black uppercase p-3 rounded-xl">Preview Track</button>
+                        <button onclick="addToPlaylist()" class="flex-1 bg-cyan-500 text-black text-[10px] font-black uppercase p-3 rounded-xl">Add to List</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="saveMusicData()" class="flex-1 bg-white text-black p-4 rounded-2xl font-black uppercase italic">Save & Sync Playlist</button>
+                <button onclick="toggleModal('music-modal')" class="bg-white/10 px-8 rounded-2xl text-[9px] font-black uppercase">Close</button>
+            </div>
         </div>
     </div>
 
     <div id="level-modal" class="fixed inset-0 bg-black/98 hidden z-[300] flex items-center justify-center p-6"><div class="glass p-12 rounded-[4rem] w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden"><h2 class="text-4xl font-black uppercase italic mb-8">Level Creator</h2><div class="flex-1 overflow-y-auto grid grid-cols-2 gap-12 custom-scroll"><div class="space-y-6"><input id="in-name" placeholder="LEVEL NAME" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none"><input id="in-ver" placeholder="VERIFIER" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none"><input id="in-pts" type="number" placeholder="POINTS" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none"><input id="in-yt-link" oninput="previewYT()" placeholder="YOUTUBE URL" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-cyan-400"><div class="grid grid-cols-2 gap-4"><label class="bg-white/5 border border-dashed border-white/20 p-6 rounded-3xl text-center cursor-pointer"><input type="file" class="hidden" onchange="handleFile(this, 'thumb')"><span class="text-[9px] font-black">THUMB</span></label><label class="bg-white/5 border border-dashed border-white/20 p-6 rounded-3xl text-center cursor-pointer"><input type="file" class="hidden" onchange="handleFile(this, 'ver-icon')"><span class="text-[9px] font-black">VERIFIER ICON</span></label></div></div><div><div id="p-yt-preview" class="w-full aspect-video bg-black rounded-3xl overflow-hidden mb-4 border border-white/10"></div><img id="p-icon-preview" class="player-icon !w-16 !h-16 hidden"></div></div><button onclick="saveLevel()" id="publish-btn" class="w-full bg-cyan-500 text-black font-black p-6 rounded-[2.5rem] mt-8 uppercase italic">Publish to Cloud</button></div></div>
-    
-    <div id="victor-modal" class="fixed inset-0 bg-black/98 hidden z-[400] flex items-center justify-center p-6"><div class="glass p-10 rounded-[3rem] w-full max-w-md text-center"><h2 class="text-xl font-black uppercase italic mb-6">Add Victor</h2><input id="vic-name" placeholder="USERNAME" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl mb-4 outline-none"><label class="block bg-white/10 p-4 rounded-xl border border-white/20 text-[10px] mb-8 cursor-pointer font-bold"><input type="file" class="hidden" onchange="handleFile(this, 'vic-icon')">UPLOAD ICON</label><button onclick="confirmVictor()" class="w-full bg-cyan-500 text-black p-4 rounded-xl font-black uppercase italic">Add Victor</button></div></div>
 
-    <div id="global-music-player"></div> <audio id="global-audio-player" loop></audio>
+    <audio id="global-audio" loop></audio>
+    <div id="yt-player-container" style="display:none"></div>
 
     <script>
         const BIN_ID = "698f025043b1c97be97bd479";
         const MASTER_KEY = "$2a$10$aQSkEXzETrsXiBcRD1c88eqNF5v5H9cPk5PhObcbVsvYLJvNTFFsS";
         const STAFF_PASS = "486970";
 
-        let db = { levels: [], profiles: {}, music: { type: 'none', src: '' } };
-        let isStaff = false, activeIdx = null, tempThumb, tempIcon, tempVicIcon, tempMusic;
+        let db = { levels: [], profiles: {}, playlist: [] };
+        let isStaff = false, activeIdx = null, tempThumb, tempIcon, tempVicIcon, currentTrack = 0;
 
-        // MOUSE GLOW
+        // BACKGROUND GLOW
         window.addEventListener('mousemove', e => {
             document.documentElement.style.setProperty('--x', e.clientX + 'px');
             document.documentElement.style.setProperty('--y', e.clientY + 'px');
@@ -122,8 +137,9 @@
             const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": MASTER_KEY } });
             const data = await res.json();
             db = data.record;
+            if(!db.playlist) db.playlist = [];
             renderSidebar();
-            initMusic();
+            initPlaylist();
         }
 
         async function sync() {
@@ -135,64 +151,107 @@
             location.reload();
         }
 
-        // --- LEADERBOARD LOGIC ---
-        function renderLeaderboard() {
-            const scores = {};
-            db.levels.forEach(lvl => {
-                // Add Verifier points
-                scores[lvl.ver] = (scores[lvl.ver] || 0) + lvl.pts;
-                // Add Victor points
-                if (lvl.victors) {
-                    lvl.victors.forEach(v => {
-                        scores[v] = (scores[v] || 0) + lvl.pts;
-                    });
-                }
-            });
+        // --- SUBMIT RECORD (FIXED) ---
+        async function addVictorDirect() {
+            const name = document.getElementById('vic-name-input').value.trim();
+            if(!name || activeIdx === null) return;
+            
+            // Duplicate Check
+            if(db.levels[activeIdx].victors.includes(name)) {
+                const err = document.getElementById('vic-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
+                return;
+            }
 
-            const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
-            document.getElementById('lb-content').innerHTML = sorted.map(([name, pts], i) => `
-                <div class="glass p-6 rounded-3xl flex items-center gap-6 border-white/5 hover:border-cyan-500/20 transition">
-                    <span class="text-2xl font-black italic opacity-20 w-8">#${i+1}</span>
-                    <img src="${db.profiles[name] || ''}" class="player-icon">
-                    <span class="text-xl font-black uppercase flex-1 italic">${name}</span>
-                    <span class="text-cyan-400 font-black text-2xl">${pts} <span class="text-[10px] opacity-50">PTS</span></span>
+            if(tempVicIcon) db.profiles[name] = tempVicIcon;
+            db.levels[activeIdx].victors.push(name);
+            await sync();
+        }
+
+        // --- MULTI-SONG PLAYLIST LOGIC ---
+        function initPlaylist() {
+            if(!db.playlist.length) return;
+            playTrack(0);
+        }
+
+        function playTrack(idx) {
+            if(!db.playlist[idx]) return;
+            currentTrack = idx;
+            const track = db.playlist[idx];
+            const display = document.getElementById('music-display');
+            display.innerText = `Track ${idx + 1}`;
+
+            if(track.includes('youtube.com') || track.includes('youtu.be')) {
+                const id = track.match(/([\w\-]{11})/)[0];
+                document.getElementById('yt-player-container').innerHTML = `<iframe id="yt-bg" width="0" height="0" src="https://www.youtube.com/embed/${id}?autoplay=1&enablejsapi=1" frameborder="0"></iframe>`;
+                document.getElementById('global-audio').pause();
+            } else {
+                const audio = document.getElementById('global-audio');
+                audio.src = track;
+                audio.play().catch(() => display.innerText = "Click to Play");
+                document.getElementById('yt-player-container').innerHTML = '';
+            }
+        }
+
+        function nextTrack() {
+            currentTrack = (currentTrack + 1) % db.playlist.length;
+            playTrack(currentTrack);
+        }
+
+        function addToPlaylist() {
+            const url = document.getElementById('music-input-url').value;
+            if(url) {
+                db.playlist.push(url);
+                renderPlaylistEditor();
+                document.getElementById('music-input-url').value = '';
+            }
+        }
+
+        function renderPlaylistEditor() {
+            document.getElementById('playlist-items').innerHTML = db.playlist.map((url, i) => `
+                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
+                    <span class="text-[10px] opacity-40 truncate flex-1">#${i+1}: ${url}</span>
+                    <button onclick="removeTrack(${i})" class="text-red-500 font-black text-[10px] ml-4">REMOVE</button>
                 </div>
             `).join('');
         }
 
-        // --- MUSIC LOGIC ---
-        function initMusic() {
-            if(!db.music || db.music.type === 'none') return;
-            const status = document.getElementById('music-status');
-            if(db.music.type === 'yt') {
-                const id = db.music.src.match(/([\w\-]{11})/)[0];
-                document.getElementById('global-music-player').innerHTML = `<iframe id="yt-audio" width="0" height="0" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}" frameborder="0"></iframe>`;
-                status.innerText = "YouTube Audio";
-            } else {
-                const audio = document.getElementById('global-audio-player');
-                audio.src = db.music.src;
-                audio.play();
-                status.innerText = "MP3 Audio";
-            }
+        function removeTrack(i) {
+            db.playlist.splice(i, 1);
+            renderPlaylistEditor();
         }
 
-        function handleMusicUpload(input) {
-            const reader = new FileReader();
-            reader.onload = e => tempMusic = e.target.result;
-            reader.readAsDataURL(input.files[0]);
+        function previewMusicTrack() {
+            const url = document.getElementById('music-input-url').value;
+            if(!url) return;
+            const audio = new Audio(url);
+            audio.play().catch(() => alert("YouTube links cannot be previewed here, just add them to the list!"));
+            setTimeout(() => audio.pause(), 5000);
         }
 
-        async function saveMusic() {
-            const ytUrl = document.getElementById('music-yt').value;
-            if(ytUrl) {
-                db.music = { type: 'yt', src: ytUrl };
-            } else if(tempMusic) {
-                db.music = { type: 'file', src: tempMusic };
-            }
+        async function saveMusicData() {
             await sync();
         }
 
-        // --- CORE FUNCTIONS (File Handling, Save, Show) ---
+        // --- LEADERBOARD ---
+        function renderLeaderboard() {
+            const scores = {};
+            db.levels.forEach(lvl => {
+                scores[lvl.ver] = (scores[lvl.ver] || 0) + lvl.pts;
+                if (lvl.victors) lvl.victors.forEach(v => scores[v] = (scores[v] || 0) + lvl.pts);
+            });
+            const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+            document.getElementById('lb-content').innerHTML = sorted.map(([name, pts], i) => `
+                <div class="glass p-6 rounded-3xl flex items-center gap-6">
+                    <span class="text-2xl font-black italic opacity-20">#${i+1}</span>
+                    <img src="${db.profiles[name] || ''}" class="player-icon">
+                    <span class="text-xl font-black uppercase flex-1 italic">${name}</span>
+                    <span class="text-cyan-400 font-black text-2xl">${pts} PTS</span>
+                </div>`).join('');
+        }
+
+        // --- CORE UI ---
         function handleFile(input, type) {
             const reader = new FileReader();
             reader.onload = e => {
@@ -226,13 +285,6 @@
             await sync();
         }
 
-        async function confirmVictor() {
-            const name = document.getElementById('vic-name').value;
-            if(tempVicIcon) db.profiles[name] = tempVicIcon;
-            db.levels[activeIdx].victors.push(name);
-            await sync();
-        }
-
         function showLvl(idx) {
             activeIdx = idx;
             const l = db.levels[idx];
@@ -259,7 +311,7 @@
                 <div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
                     <img src="${db.profiles[v] || ''}" class="player-icon !w-6 !h-6">
                     <span class="text-[10px] font-black uppercase">${v}</span>
-                </div>`).join('') || '<p class="text-[9px] opacity-20 italic">No victors</p>';
+                </div>`).join('') || '<p class="text-[9px] opacity-20 italic">No records yet.</p>';
         }
 
         function toggleStaff() { if(prompt("CODE:") === STAFF_PASS) { isStaff = true; document.body.classList.add('is-staff'); } }
@@ -268,9 +320,8 @@
             document.getElementById('page-'+p).classList.add('page-active');
             if(p === 'leaderboard') renderLeaderboard();
         }
-        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); if(id==='music-modal') renderPlaylistEditor(); }
         function openAddModal() { toggleModal('level-modal'); }
-        function openVictorModal() { toggleModal('victor-modal'); }
         function openMusicModal() { toggleModal('music-modal'); }
 
         loadDB();
