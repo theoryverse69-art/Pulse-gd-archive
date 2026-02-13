@@ -3,133 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PULSE | ARCHIVE v39</title>
+    <title>PULSE | ARCHIVE v40</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap');
+        
         body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100vh; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(50px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        #bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at var(--x) var(--y), rgba(0, 255, 255, 0.1) 0%, transparent 60%); z-index: -1; pointer-events: none; }
-        .lvl-card { transition: all 0.3s; cursor: pointer; border: 1px solid transparent; }
-        .lvl-card:hover { background: rgba(0, 255, 255, 0.05); transform: translateX(10px); border-color: rgba(0, 255, 255, 0.2); }
-        .player-icon { width: 40px; height: 40px; image-rendering: pixelated; object-fit: contain; border-radius: 8px; background: rgba(255,255,255,0.05); }
+        
+        /* THE STYLES ARE BACK */
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8); }
+        #bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at var(--x) var(--y), rgba(0, 255, 255, 0.15) 0%, transparent 50%); z-index: -1; pointer-events: none; }
+        
+        .lvl-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; border: 1px solid transparent; }
+        .lvl-card:hover { background: rgba(0, 255, 255, 0.08); transform: translateX(12px); border-color: rgba(0, 255, 255, 0.3); }
+        
+        .player-icon { width: 44px; height: 44px; image-rendering: pixelated; object-fit: contain; border-radius: 10px; background: #111; border: 1px solid rgba(255,255,255,0.1); }
+        
         .page { display: none; height: 100vh; padding: 6rem 2rem 2rem 2rem; }
-        .page-active { display: flex; animation: pEnter 0.4s ease-out; }
-        @keyframes pEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-active { display: flex; animation: pEnter 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        @keyframes pEnter { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .staff-only { display: none !important; }
         .is-staff .staff-only { display: flex !important; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        iframe { border-radius: 24px; }
     </style>
 </head>
 <body>
     <div id="bg-glow"></div>
     
     <nav class="fixed top-0 left-0 w-full p-8 flex justify-between items-center z-[150]">
-        <div onclick="nav('list')" class="text-2xl font-black italic tracking-tighter cursor-pointer">PULSE.</div>
-        <div class="flex gap-8">
-            <span onclick="nav('list')" class="text-[10px] font-bold uppercase cursor-pointer hover:text-cyan-400">Archive</span>
-            <span onclick="nav('leaderboard')" class="text-[10px] font-bold uppercase cursor-pointer hover:text-cyan-400">Leaderboard</span>
-            <span onclick="nav('pending')" class="staff-only text-[10px] font-bold uppercase cursor-pointer text-yellow-500">Queue</span>
+        <div onclick="nav('list')" class="text-3xl font-black italic tracking-tighter cursor-pointer hover:text-cyan-400 transition">PULSE.</div>
+        <div class="flex gap-10 items-center">
+            <span onclick="nav('list')" class="text-[10px] font-black uppercase cursor-pointer hover:tracking-widest transition-all">Archive</span>
+            <span onclick="nav('leaderboard')" class="text-[10px] font-black uppercase cursor-pointer hover:tracking-widest transition-all">Leaderboard</span>
+            <span onclick="nav('pending')" class="staff-only text-[10px] font-black uppercase cursor-pointer text-yellow-400 animate-pulse">Pending Queue</span>
         </div>
         <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3 glass px-4 py-2 rounded-full border-white/10">
-                <div id="music-display" class="text-[8px] font-black uppercase opacity-40 italic">...</div>
-                <button onclick="nextTrack()" class="text-[10px]">⏭</button>
-                <button onclick="openMusicModal()" class="staff-only text-[10px] text-cyan-400">⚙</button>
+            <div class="flex items-center gap-4 glass px-5 py-2 rounded-full">
+                <div id="music-info" class="text-[9px] font-black uppercase opacity-50 italic">System Mute</div>
+                <button onclick="playNext()" class="text-xs hover:scale-125 transition">⏭</button>
+                <button onclick="openMusicModal()" class="staff-only text-cyan-400 text-xs">⚙</button>
             </div>
-            <button onclick="toggleStaff()" id="staff-indicator" class="w-3 h-3 rounded-full bg-white/10 border border-white/20"></button>
+            <button onclick="toggleStaff()" id="staff-indicator" class="w-4 h-4 rounded-full bg-white/10 border border-white/20 transition-all"></button>
         </div>
     </nav>
 
-    <div id="page-list" class="page gap-6">
-        <aside class="w-80 flex flex-col gap-4">
-            <div class="glass p-5 rounded-[2rem]">
-                <input type="text" id="lvl-search" placeholder="SEARCH..." class="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-[11px] outline-none mb-4" oninput="renderSidebar()">
-                <button onclick="openAddModal()" class="staff-only w-full bg-white text-black font-black py-2 rounded-xl text-[10px] uppercase">Add Level</button>
+    <div id="page-list" class="page gap-8">
+        <aside class="w-80 flex flex-col gap-5">
+            <div class="glass p-6 rounded-[2.5rem]">
+                <input type="text" id="lvl-search" placeholder="FIND LEVEL..." class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-[11px] outline-none mb-4 focus:border-cyan-500 transition" oninput="renderSidebar()">
+                <button onclick="openAddModal()" class="staff-only w-full bg-cyan-500 text-black font-black py-3 rounded-2xl text-[10px] uppercase shadow-lg shadow-cyan-500/20">Create Entry</button>
             </div>
-            <div id="sidebar-content" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll"></div>
+            <div id="sidebar-content" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
         </aside>
 
-        <main class="flex-1 glass rounded-[3rem] p-8 flex flex-col overflow-hidden relative">
-            <div id="viewer-empty" class="m-auto opacity-10 font-black italic text-6xl uppercase">Pulse Archive</div>
+        <main class="flex-1 glass rounded-[3.5rem] p-10 flex flex-col overflow-hidden relative">
+            <div id="viewer-empty" class="m-auto opacity-5 font-black italic text-8xl uppercase tracking-tighter">Pulse Archive</div>
             <div id="viewer-content" class="hidden h-full flex flex-col overflow-y-auto pr-4 custom-scroll">
-                <div class="flex justify-between items-start mb-4">
-                    <div id="v-video-container" class="flex-1 aspect-video shadow-2xl rounded-3xl overflow-hidden bg-black mr-8"></div>
-                    <div class="staff-only flex flex-col gap-2">
-                        <button onclick="editCurrentLevel()" class="bg-blue-500/20 text-blue-400 text-[9px] font-black p-4 rounded-xl uppercase">Edit</button>
-                        <button onclick="deleteCurrentLevel()" class="bg-red-500/20 text-red-400 text-[9px] font-black p-4 rounded-xl uppercase">Delete</button>
+                <div class="flex justify-between items-start mb-6">
+                    <div id="v-video-wrap" class="flex-1 aspect-video shadow-2xl rounded-[2rem] overflow-hidden bg-black mr-8 border border-white/5"></div>
+                    <div class="staff-only flex flex-col gap-3">
+                        <button onclick="editCurrentLevel()" class="glass bg-blue-500/10 text-blue-400 text-[10px] font-black px-6 py-4 rounded-2xl uppercase hover:bg-blue-500/20">Edit</button>
+                        <button onclick="deleteCurrentLevel()" class="glass bg-red-500/10 text-red-400 text-[10px] font-black px-6 py-4 rounded-2xl uppercase hover:bg-red-500/20">Delete</button>
                     </div>
                 </div>
                 
-                <div class="flex gap-10 w-full">
+                <div class="flex gap-12 w-full">
                     <div class="flex-1">
-                        <h2 id="v-title" class="text-6xl font-black italic uppercase tracking-tighter mb-4"></h2>
-                        <div class="flex items-center gap-4 mb-8">
-                            <img id="v-ver-icon" class="player-icon !w-8 !h-8">
-                            <span class="opacity-40 uppercase text-[10px] font-bold">Verified by <span id="v-ver" class="text-white"></span></span>
-                            <span class="text-cyan-400 font-black text-2xl ml-auto" id="v-pts"></span>
+                        <h2 id="v-title" class="text-7xl font-black italic uppercase tracking-tighter mb-4 leading-none"></h2>
+                        <div class="flex items-center gap-5 mb-10">
+                            <img id="v-ver-icon" class="player-icon !w-10 !h-10">
+                            <div class="flex flex-col">
+                                <span class="opacity-30 uppercase text-[9px] font-black tracking-widest">Verified By</span>
+                                <span id="v-ver" class="text-white font-black uppercase text-sm"></span>
+                            </div>
+                            <span class="text-cyan-400 font-black text-4xl ml-auto italic" id="v-pts"></span>
                         </div>
                         
-                        <div class="glass p-8 rounded-[2.5rem]">
-                            <h3 class="text-[10px] font-black uppercase text-cyan-400 mb-4 tracking-widest">Submit Record</h3>
+                        <div class="glass p-8 rounded-[3rem] border-white/5">
+                            <h3 class="text-[11px] font-black uppercase text-cyan-400 mb-6 tracking-widest">Submit Record</h3>
                             <div class="flex gap-4">
-                                <input id="sub-name" placeholder="Name" class="flex-1 bg-white/5 border border-white/10 p-4 rounded-xl text-xs outline-none">
-                                <input id="sub-link" placeholder="YT Proof Link" class="flex-1 bg-white/5 border border-white/10 p-4 rounded-xl text-xs outline-none">
-                                <button onclick="submitRecordToQueue()" class="bg-white text-black px-6 font-black uppercase text-[10px] rounded-xl">Submit for Review</button>
-                            </div>
-                        </div>
-
-                        <div class="staff-only glass p-8 rounded-[2.5rem] mt-4 border-cyan-500/20">
-                            <h3 class="text-[10px] font-black uppercase text-yellow-500 mb-4 tracking-widest">Direct Add Victor (Staff Only)</h3>
-                            <div class="flex gap-4">
-                                <input id="staff-vic-name" placeholder="Username" class="flex-1 bg-white/5 border border-white/10 p-4 rounded-xl text-xs outline-none">
-                                <label class="bg-white/10 p-4 rounded-xl cursor-pointer text-[9px] font-black"><input type="file" class="hidden" onchange="handleFile(this, 'vic-icon')">Icon</label>
-                                <button onclick="staffAddVictor()" class="bg-cyan-500 text-black px-6 font-black uppercase text-[10px] rounded-xl italic">Instant Add</button>
+                                <input id="sub-name" placeholder="In-game Name" class="flex-1 bg-white/5 border border-white/10 p-5 rounded-2xl text-xs outline-none focus:border-cyan-500">
+                                <input id="sub-link" placeholder="YouTube Video Link" class="flex-1 bg-white/5 border border-white/10 p-5 rounded-2xl text-xs outline-none focus:border-cyan-500">
+                                <button onclick="submitToQueue()" class="bg-white text-black px-10 font-black uppercase text-[10px] rounded-2xl hover:bg-cyan-400 transition transform hover:scale-105">Submit</button>
                             </div>
                         </div>
                     </div>
+
                     <div class="w-80">
-                        <div class="glass p-6 rounded-[2.5rem]"><h3 class="text-[10px] font-black opacity-30 uppercase mb-6">Victors</h3><div id="v-victors" class="space-y-3"></div></div>
+                        <div class="glass p-8 rounded-[3rem]">
+                            <h3 class="text-[10px] font-black opacity-30 uppercase mb-8 tracking-widest">Victors</h3>
+                            <div id="v-victors" class="space-y-4"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="page-pending" class="page flex-col items-center overflow-y-auto custom-scroll">
-        <h2 class="text-5xl font-black italic uppercase mb-12 tracking-tighter">Submission Queue</h2>
-        <div id="pending-list" class="w-full max-w-4xl space-y-4"></div>
-    </div>
-
-    <div id="page-leaderboard" class="page flex-col items-center overflow-y-auto custom-scroll">
-        <h2 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Leaderboard</h2>
-        <div id="lb-content" class="w-full max-w-3xl space-y-4"></div>
-    </div>
-
-    <div id="music-modal" class="fixed inset-0 bg-black/95 hidden z-[500] flex items-center justify-center p-6 backdrop-blur-xl">
-        <div class="glass p-10 rounded-[3rem] w-full max-w-xl">
-            <h2 class="text-2xl font-black italic uppercase mb-6">Playlist Editor</h2>
-            <div id="playlist-items" class="space-y-2 mb-6 max-h-48 overflow-y-auto custom-scroll"></div>
-            <div class="space-y-4">
-                <input id="music-url" placeholder="YouTube/MP3 Link" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-xs outline-none">
-                <label class="block bg-white/10 p-4 rounded-xl border border-dashed border-white/20 text-center cursor-pointer text-[10px] font-black uppercase">
-                    <input type="file" class="hidden" accept="audio/*" onchange="handleMusicUpload(this)">
-                    Upload MP3 File
-                </label>
-                <button onclick="addToPlaylist()" class="w-full bg-cyan-500 text-black p-4 rounded-xl font-black uppercase text-[10px]">Add Track</button>
+    <div id="approve-modal" class="fixed inset-0 bg-black/98 hidden z-[600] flex items-center justify-center p-6">
+        <div class="glass p-12 rounded-[4rem] w-full max-w-md text-center">
+            <h2 class="text-2xl font-black italic uppercase mb-2">Approve Victor</h2>
+            <p id="approve-name-display" class="text-cyan-400 font-black uppercase mb-8"></p>
+            
+            <label class="block bg-white/5 p-10 border-2 border-dashed border-white/10 rounded-[2rem] cursor-pointer hover:bg-white/10 transition mb-8">
+                <input type="file" class="hidden" onchange="handleFile(this, 'approve-icon')">
+                <span class="text-[10px] font-black uppercase block mb-2">Upload Player Icon</span>
+                <span class="opacity-30 text-[9px]">CUBE / SHIP / BALL</span>
+            </label>
+            
+            <div id="p-approve-preview" class="flex justify-center mb-8 hidden">
+                <img class="player-icon !w-20 !h-20 shadow-2xl shadow-cyan-500/20">
             </div>
-            <div class="flex gap-4 mt-8">
-                <button onclick="sync()" class="flex-1 bg-white text-black p-4 rounded-xl font-black uppercase text-[10px]">Save Playlist</button>
-                <button onclick="toggleModal('music-modal')" class="p-4 text-[10px] font-black opacity-30">Close</button>
+
+            <div class="flex gap-4">
+                <button onclick="confirmApproval()" class="flex-1 bg-cyan-500 text-black p-5 rounded-2xl font-black uppercase italic">Finish Approval</button>
+                <button onclick="toggleModal('approve-modal')" class="p-5 text-[10px] font-black opacity-30">Cancel</button>
             </div>
         </div>
     </div>
 
-    <div id="level-modal" class="fixed inset-0 bg-black/98 hidden z-[300] flex items-center justify-center p-6"><div class="glass p-12 rounded-[4rem] w-full max-w-5xl h-[85vh] flex flex-col"><h2 id="modal-title" class="text-4xl font-black uppercase italic mb-8">Level Creator</h2><div class="flex-1 overflow-y-auto grid grid-cols-2 gap-12 custom-scroll"><div class="space-y-4"><input id="in-name" placeholder="NAME" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none"><input id="in-ver" placeholder="VERIFIER" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none"><input id="in-pts" type="number" placeholder="POINTS" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none"><input id="in-yt" placeholder="YT LINK" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none"><label class="block bg-white/5 p-8 border-dashed border border-white/20 rounded-xl text-center cursor-pointer"><input type="file" class="hidden" onchange="handleFile(this, 'thumb')">Thumb</label></div><div id="p-yt-preview" class="bg-black rounded-xl aspect-video border border-white/10"></div></div><button onclick="saveLevel()" class="w-full bg-cyan-500 text-black font-black p-6 rounded-3xl mt-8 uppercase italic">Confirm Cloud Sync</button></div></div>
+    <div id="page-pending" class="page flex-col items-center overflow-y-auto custom-scroll">
+        <h2 class="text-6xl font-black italic uppercase mb-12 tracking-tighter">Queue</h2>
+        <div id="pending-list" class="w-full max-w-4xl space-y-4"></div>
+    </div>
+
+    <div id="page-leaderboard" class="page flex-col items-center overflow-y-auto custom-scroll">
+        <h2 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Top Players</h2>
+        <div id="lb-content" class="w-full max-w-3xl space-y-4"></div>
+    </div>
+
+    <div id="music-modal" class="fixed inset-0 bg-black/95 hidden z-[500] flex items-center justify-center p-6 backdrop-blur-xl">
+        <div class="glass p-12 rounded-[4rem] w-full max-w-xl">
+            <h2 class="text-3xl font-black italic uppercase mb-8">Playlist</h2>
+            <div id="playlist-items" class="space-y-3 mb-10 max-h-48 overflow-y-auto custom-scroll pr-4"></div>
+            
+            <div class="space-y-4">
+                <input id="music-url-input" placeholder="YouTube or Direct MP3 Link" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-xs outline-none">
+                <div class="text-center opacity-20 text-[9px] font-black">OR</div>
+                <label class="block bg-white/5 p-5 border border-dashed border-white/20 rounded-2xl text-center cursor-pointer text-[10px] font-black uppercase hover:bg-white/10">
+                    <input type="file" class="hidden" accept="audio/*" onchange="handleMusicUpload(this)">
+                    Upload MP3 File
+                </label>
+                <button onclick="addToPlaylist()" class="w-full bg-cyan-500 text-black p-5 rounded-2xl font-black uppercase text-[10px]">Add to Playlist</button>
+            </div>
+            
+            <button onclick="toggleModal('music-modal')" class="w-full mt-10 p-4 text-[10px] font-black opacity-30 uppercase">Close Editor</button>
+        </div>
+    </div>
+
+    <div id="level-modal" class="fixed inset-0 bg-black/98 hidden z-[300] flex items-center justify-center p-6 backdrop-blur-2xl">
+        <div class="glass p-12 rounded-[4rem] w-full max-w-6xl h-[85vh] flex flex-col border-white/20">
+            <h2 id="modal-title" class="text-5xl font-black uppercase italic mb-10 tracking-tighter">Level Creator</h2>
+            <div class="flex-1 overflow-y-auto grid grid-cols-2 gap-16 custom-scroll pr-6">
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-[9px] font-black opacity-30 uppercase ml-2">Configuration</label>
+                        <input id="in-name" placeholder="LEVEL NAME" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl outline-none mt-2 focus:border-cyan-500">
+                    </div>
+                    <input id="in-ver" placeholder="VERIFIER NAME" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500">
+                    <input id="in-pts" type="number" placeholder="POINTS" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500">
+                    <input id="in-yt" oninput="previewYT()" placeholder="YOUTUBE LINK" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500 text-cyan-400">
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <label class="block bg-white/5 p-8 border-dashed border border-white/10 rounded-3xl text-center cursor-pointer hover:bg-white/10">
+                            <input type="file" class="hidden" onchange="handleFile(this, 'thumb')">
+                            <span class="text-[10px] font-black uppercase">Thumb</span>
+                        </label>
+                        <label class="block bg-white/5 p-8 border-dashed border border-white/10 rounded-3xl text-center cursor-pointer hover:bg-white/10">
+                            <input type="file" class="hidden" onchange="handleFile(this, 'ver-icon')">
+                            <span class="text-[10px] font-black uppercase">Ver Icon</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[9px] font-black opacity-30 uppercase mb-4">Live Video Preview</label>
+                    <div id="p-yt-preview" class="bg-black rounded-[2rem] aspect-video border border-white/10 shadow-2xl flex items-center justify-center text-[10px] opacity-20 font-black">NO VIDEO</div>
+                    <div class="mt-8 flex items-center gap-6 glass p-6 rounded-3xl">
+                        <img id="p-icon-preview" class="player-icon !w-16 !h-16 hidden">
+                        <span class="text-[10px] font-black opacity-30 uppercase">Verifier Icon Preview</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="saveLevel()" class="w-full bg-white text-black font-black p-8 rounded-[2.5rem] mt-10 uppercase italic text-xl hover:bg-cyan-400 transition">Sync to Archive</button>
+        </div>
+    </div>
 
     <audio id="global-audio" loop></audio>
-    <div id="yt-music-container" style="display:none"></div>
+    <div id="yt-player-host" style="position:absolute; top:-1000px; left:-1000px;"></div>
 
     <script>
         const BIN_ID = "698f025043b1c97be97bd479";
@@ -137,124 +202,132 @@
         const STAFF_PASS = "486970";
 
         let db = { levels: [], profiles: {}, playlist: [], pending: [] };
-        let isStaff = false, activeIdx = null, editIdx = null, tempThumb, tempIcon, tempVicIcon, currentTrack = 0;
+        let isStaff = false, activeIdx = null, editIdx = null, approveIdx = null, tempThumb, tempIcon, tempApproveIcon, currentTrack = 0;
 
+        // MOUSE GLOW
         window.addEventListener('mousemove', e => {
             document.documentElement.style.setProperty('--x', e.clientX + 'px');
             document.documentElement.style.setProperty('--y', e.clientY + 'px');
         });
 
         async function loadDB() {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": MASTER_KEY } });
-            const data = await res.json();
-            db = data.record;
-            if(!db.playlist) db.playlist = [];
-            if(!db.pending) db.pending = [];
-            renderSidebar();
-            if(db.playlist.length) playTrack(0);
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": MASTER_KEY } });
+                const data = await res.json();
+                db = data.record;
+                if(!db.playlist) db.playlist = [];
+                if(!db.pending) db.pending = [];
+                renderSidebar();
+                // Browsers need a click to play music
+                document.body.addEventListener('click', () => { if(db.playlist.length) playTrack(currentTrack); }, {once: true});
+            } catch(e) { console.error("Cloud Error"); }
         }
 
         async function sync() {
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: 'PUT', headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY }, body: JSON.stringify(db) });
+            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { 
+                method: 'PUT', 
+                headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY }, 
+                body: JSON.stringify(db) 
+            });
             location.reload();
         }
 
-        // --- EDIT / DELETE ---
-        function deleteCurrentLevel() { if(confirm("Delete this level?")) { db.levels.splice(activeIdx, 1); sync(); } }
-        function editCurrentLevel() {
-            editIdx = activeIdx;
-            const l = db.levels[editIdx];
-            document.getElementById('modal-title').innerText = "Edit Level";
-            document.getElementById('in-name').value = l.name;
-            document.getElementById('in-ver').value = l.ver;
-            document.getElementById('in-pts').value = l.pts;
-            document.getElementById('in-yt').value = l.ytId;
-            toggleModal('level-modal');
-        }
-
-        // --- SUBMISSION QUEUE ---
-        function submitRecordToQueue() {
+        // --- SUBMISSION & APPROVAL LOGIC ---
+        function submitToQueue() {
             const name = document.getElementById('sub-name').value;
             const link = document.getElementById('sub-link').value;
-            if(!name || !link) return alert("Fill all fields");
+            if(!name || !link) return alert("Missing Info");
             db.pending.push({ name, link, level: db.levels[activeIdx].name, levelIdx: activeIdx });
             sync();
-            alert("Submitted to staff for review!");
         }
 
-        function renderPending() {
-            document.getElementById('pending-list').innerHTML = db.pending.map((p, i) => `
-                <div class="glass p-6 rounded-3xl flex justify-between items-center">
-                    <div>
-                        <p class="text-xs font-black uppercase">${p.name} <span class="opacity-30">on</span> ${p.level}</p>
-                        <a href="${p.link}" target="_blank" class="text-[10px] text-cyan-400 font-bold underline">Watch Proof</a>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="approveRecord(${i})" class="bg-green-500/20 text-green-400 text-[9px] font-black p-3 rounded-lg uppercase">Approve</button>
-                        <button onclick="db.pending.splice(${i},1);sync();" class="bg-red-500/20 text-red-400 text-[9px] font-black p-3 rounded-lg uppercase">Reject</button>
-                    </div>
-                </div>`).join('') || '<p class="opacity-20 italic">No submissions pending.</p>';
+        function startApproval(i) {
+            approveIdx = i;
+            document.getElementById('approve-name-display').innerText = db.pending[i].name;
+            toggleModal('approve-modal');
         }
 
-        async function approveRecord(i) {
-            const p = db.pending[i];
+        async function confirmApproval() {
+            const p = db.pending[approveIdx];
+            if(tempApproveIcon) db.profiles[p.name] = tempApproveIcon;
             if(!db.levels[p.levelIdx].victors.includes(p.name)) {
                 db.levels[p.levelIdx].victors.push(p.name);
             }
-            db.pending.splice(i, 1);
+            db.pending.splice(approveIdx, 1);
             await sync();
         }
 
-        function staffAddVictor() {
-            const name = document.getElementById('staff-vic-name').value;
-            if(!name) return;
-            if(tempVicIcon) db.profiles[name] = tempVicIcon;
-            if(!db.levels[activeIdx].victors.includes(name)) db.levels[activeIdx].victors.push(name);
-            sync();
-        }
-
-        // --- MUSIC ---
+        // --- MUSIC ENGINE (FIXED) ---
         function handleMusicUpload(input) {
             const reader = new FileReader();
-            reader.onload = e => { db.playlist.push(e.target.result); renderPlaylistEditor(); };
+            reader.onload = e => { db.playlist.push(e.target.result); renderPlaylist(); };
             reader.readAsDataURL(input.files[0]);
         }
-        function addToPlaylist() { const url = document.getElementById('music-url').value; if(url) { db.playlist.push(url); renderPlaylistEditor(); } }
+
+        function addToPlaylist() {
+            const url = document.getElementById('music-url-input').value;
+            if(url) { db.playlist.push(url); renderPlaylist(); document.getElementById('music-url-input').value = ''; }
+        }
+
         function playTrack(idx) {
+            if(!db.playlist[idx]) return;
             currentTrack = idx;
             const track = db.playlist[idx];
-            document.getElementById('music-display').innerText = `Song ${idx+1}`;
-            if(track.includes('youtube')) {
+            document.getElementById('music-info').innerText = `SONG ${idx + 1}`;
+            
+            const audio = document.getElementById('global-audio');
+            const ytHost = document.getElementById('yt-player-host');
+            
+            if(track.includes('youtube.com') || track.includes('youtu.be')) {
+                audio.pause();
                 const id = track.match(/([\w\-]{11})/)[0];
-                document.getElementById('yt-music-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`;
+                ytHost.innerHTML = `<iframe width="200" height="200" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}" allow="autoplay"></iframe>`;
             } else {
-                const a = document.getElementById('global-audio'); a.src = track; a.play();
+                ytHost.innerHTML = '';
+                audio.src = track;
+                audio.play().catch(() => { document.getElementById('music-info').innerText = "Click to Play"; });
             }
         }
-        function nextTrack() { currentTrack = (currentTrack + 1) % db.playlist.length; playTrack(currentTrack); }
 
-        // --- CORE ---
+        function playNext() { currentTrack = (currentTrack + 1) % db.playlist.length; playTrack(currentTrack); }
+
+        // --- CORE UI ---
         function handleFile(input, type) {
             const reader = new FileReader();
             reader.onload = e => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = type.includes('icon') ? 64 : 400;
-                    canvas.height = type.includes('icon') ? 64 : 225;
+                    canvas.width = type.includes('icon') ? 80 : 480;
+                    canvas.height = type.includes('icon') ? 80 : 270;
                     canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                    const comp = canvas.toDataURL('image/jpeg', 0.6);
+                    const comp = canvas.toDataURL('image/jpeg', 0.7);
+                    
                     if(type === 'thumb') tempThumb = comp;
-                    else if(type === 'ver-icon') { tempIcon = comp; document.getElementById('p-icon-preview')?.classList.remove('hidden'); }
-                    else if(type === 'vic-icon') tempVicIcon = comp;
+                    else if(type === 'ver-icon') { 
+                        tempIcon = comp; 
+                        document.getElementById('p-icon-preview').src = comp; 
+                        document.getElementById('p-icon-preview').classList.remove('hidden'); 
+                    }
+                    else if(type === 'approve-icon') {
+                        tempApproveIcon = comp;
+                        document.querySelector('#p-approve-preview img').src = comp;
+                        document.getElementById('p-approve-preview').classList.remove('hidden');
+                    }
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(input.files[0]);
         }
 
+        function previewYT() {
+            const val = document.getElementById('in-yt').value;
+            const id = val.match(/([\w\-]{11})/);
+            if(id) document.getElementById('p-yt-preview').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}" frameborder="0"></iframe>`;
+        }
+
         async function saveLevel() {
-            const l = {
+            const lvl = {
                 name: document.getElementById('in-name').value,
                 ver: document.getElementById('in-ver').value,
                 pts: parseInt(document.getElementById('in-pts').value),
@@ -262,7 +335,8 @@
                 thumb: tempThumb || (editIdx !== null ? db.levels[editIdx].thumb : ''),
                 victors: editIdx !== null ? db.levels[editIdx].victors : []
             };
-            if(editIdx !== null) db.levels[editIdx] = l; else db.levels.push(l);
+            if(tempIcon) db.profiles[lvl.ver] = tempIcon;
+            if(editIdx !== null) db.levels[editIdx] = lvl; else db.levels.push(lvl);
             await sync();
         }
 
@@ -273,20 +347,59 @@
             document.getElementById('v-title').innerText = l.name;
             document.getElementById('v-ver').innerText = l.ver;
             document.getElementById('v-pts').innerText = l.pts + " PTS";
-            document.getElementById('v-video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${l.ytId}" frameborder="0"></iframe>`;
+            document.getElementById('v-video-wrap').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${l.ytId}" frameborder="0" allowfullscreen></iframe>`;
             document.getElementById('v-ver-icon').src = db.profiles[l.ver] || '';
             renderVictors(idx);
         }
 
         function renderSidebar() {
-            document.getElementById('sidebar-content').innerHTML = db.levels.map((l, i) => `<div onclick="showLvl(${i})" class="lvl-card glass p-4 rounded-2xl flex items-center gap-4"><img src="${l.thumb}" class="w-16 h-10 rounded-lg object-cover bg-white/5"><p class="font-black uppercase italic text-[11px]">${l.name}</p></div>`).join('');
+            document.getElementById('sidebar-content').innerHTML = db.levels.map((l, i) => `
+                <div onclick="showLvl(${i})" class="lvl-card glass p-5 rounded-[2rem] flex items-center gap-5">
+                    <img src="${l.thumb}" class="w-20 h-12 rounded-xl object-cover shadow-lg">
+                    <p class="font-black uppercase italic text-[12px] tracking-tighter">${l.name}</p>
+                </div>`).join('');
         }
 
         function renderVictors(idx) {
-            document.getElementById('v-victors').innerHTML = db.levels[idx].victors.map(v => `<div class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl"><img src="${db.profiles[v]}" class="player-icon !w-6 !h-6"><span class="text-[10px] font-black uppercase">${v}</span></div>`).join('') || '<p class="text-[9px] opacity-20">Empty</p>';
+            document.getElementById('v-victors').innerHTML = db.levels[idx].victors.map(v => `
+                <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <img src="${db.profiles[v] || ''}" class="player-icon !w-7 !h-7">
+                    <span class="text-[11px] font-black uppercase tracking-tight">${v}</span>
+                </div>`).join('') || '<p class="opacity-10 italic text-[10px]">No Records</p>';
         }
 
-        function toggleStaff() { if(prompt("CODE:") === STAFF_PASS) { isStaff = true; document.body.classList.add('is-staff'); } }
+        function renderPending() {
+            document.getElementById('pending-list').innerHTML = db.pending.map((p, i) => `
+                <div class="glass p-8 rounded-[2.5rem] flex justify-between items-center border-yellow-500/10">
+                    <div>
+                        <p class="text-[10px] font-black opacity-30 uppercase tracking-widest mb-1">Record Request</p>
+                        <p class="text-xl font-black uppercase italic">${p.name} <span class="text-cyan-400 font-normal">on</span> ${p.level}</p>
+                        <a href="${p.link}" target="_blank" class="text-[10px] text-cyan-400 font-bold underline mt-2 block">WATCH PROOF</a>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="startApproval(${i})" class="bg-green-500 text-black text-[10px] font-black px-8 py-4 rounded-2xl uppercase italic">Approve</button>
+                        <button onclick="db.pending.splice(${i},1);sync();" class="bg-red-500/10 text-red-500 text-[10px] font-black px-8 py-4 rounded-2xl uppercase">Deny</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderLeaderboard() {
+            const scores = {};
+            db.levels.forEach(lvl => {
+                scores[lvl.ver] = (scores[lvl.ver] || 0) + lvl.pts;
+                lvl.victors.forEach(v => scores[v] = (scores[v] || 0) + lvl.pts);
+            });
+            const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+            document.getElementById('lb-content').innerHTML = sorted.map(([name, pts], i) => `
+                <div class="glass p-8 rounded-[3rem] flex items-center gap-8 border-white/5">
+                    <span class="text-3xl font-black italic opacity-10">#${i+1}</span>
+                    <img src="${db.profiles[name] || ''}" class="player-icon !w-12 !h-12">
+                    <span class="text-2xl font-black uppercase flex-1 italic tracking-tighter">${name}</span>
+                    <span class="text-cyan-400 font-black text-3xl italic">${pts} PTS</span>
+                </div>`).join('');
+        }
+
+        function toggleStaff() { if(prompt("ACCESS CODE:") === STAFF_PASS) { isStaff = true; document.body.classList.add('is-staff'); } }
         function nav(p) { 
             document.querySelectorAll('.page').forEach(pg => pg.classList.remove('page-active'));
             document.getElementById('page-'+p).classList.add('page-active');
@@ -294,9 +407,11 @@
             if(p === 'leaderboard') renderLeaderboard();
         }
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        function openAddModal() { editIdx = null; document.getElementById('modal-title').innerText = "Add Level"; toggleModal('level-modal'); }
-        function openMusicModal() { renderPlaylistEditor(); toggleModal('music-modal'); }
-        function renderPlaylistEditor() { document.getElementById('playlist-items').innerHTML = db.playlist.map((u, i) => `<div class="flex justify-between items-center bg-white/5 p-2 rounded-lg text-[8px] truncate">#${i+1} <button onclick="db.playlist.splice(${i},1);renderPlaylistEditor()" class="text-red-500 ml-4">DEL</button></div>`).join(''); }
+        function openAddModal() { editIdx = null; document.getElementById('modal-title').innerText = "Create Level"; toggleModal('level-modal'); }
+        function editCurrentLevel() { editIdx = activeIdx; const l = db.levels[editIdx]; document.getElementById('modal-title').innerText = "Edit Level"; document.getElementById('in-name').value = l.name; document.getElementById('in-ver').value = l.ver; document.getElementById('in-pts').value = l.pts; document.getElementById('in-yt').value = l.ytId; toggleModal('level-modal'); }
+        function deleteCurrentLevel() { if(confirm("Delete level?")) { db.levels.splice(activeIdx, 1); sync(); } }
+        function openMusicModal() { renderPlaylist(); toggleModal('music-modal'); }
+        function renderPlaylist() { document.getElementById('playlist-items').innerHTML = db.playlist.map((u, i) => `<div class="flex justify-between items-center glass p-3 rounded-xl text-[9px]">SONG ${i+1} <button onclick="db.playlist.splice(${i},1);renderPlaylist()" class="text-red-500 font-black">REMOVE</button></div>`).join(''); }
 
         loadDB(); nav('list');
     </script>
