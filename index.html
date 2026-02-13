@@ -30,7 +30,7 @@
 <body>
 
     <nav class="fixed top-0 left-0 w-full p-8 flex justify-between items-center z-[150]">
-        <div onclick="nav('menu')" class="text-2xl font-black italic tracking-tighter cursor-pointer">PULSE.</div>
+        <div onclick="nav('list')" class="text-2xl font-black italic tracking-tighter cursor-pointer">PULSE.</div>
         <div class="flex gap-8">
             <span onclick="nav('list')" class="text-[10px] font-bold uppercase cursor-pointer hover:text-cyan-400">Archive</span>
             <span onclick="nav('leaderboard')" class="text-[10px] font-bold uppercase cursor-pointer hover:text-cyan-400">Leaderboard</span>
@@ -103,7 +103,7 @@
                     <input type="file" id="in-thumb-file" accept="image/*" class="hidden" onchange="handleFile(this, 'thumb')">
                     <label for="in-thumb-file" class="block bg-white/5 border border-dashed border-white/20 p-3 rounded-xl text-center text-[10px] cursor-pointer">Thumbnail</label>
                     <input type="file" id="in-video-file" accept="video/*" class="hidden" onchange="handleFile(this, 'video')">
-                    <label for="in-video-file" class="block bg-white/5 border border-dashed border-white/20 p-3 rounded-xl text-center text-[10px] cursor-pointer">Video</label>
+                    <label for="in-video-file" class="block bg-white/5 border border-dashed border-white/20 p-3 rounded-xl text-center text-[10px] cursor-pointer">Video File</label>
                     <input type="file" id="in-ver-icon" accept="image/*" class="hidden" onchange="handleFile(this, 'ver-icon')">
                     <label for="in-ver-icon" class="block bg-white/5 border border-dashed border-white/20 p-3 rounded-xl text-center text-[10px] cursor-pointer">Verifier Icon</label>
                 </div>
@@ -124,7 +124,7 @@
     </div>
 
     <script>
-        // --- !!! YOUR KEYS HERE !!! ---
+        // --- !!! YOUR KEYS STORED !!! ---
         const BIN_ID = "698f025043b1c97be97bd479";
         const MASTER_KEY = "$2a$10$aQSkEXzETrsXiBcRD1c88eqNF5v5H9cPk5PhObcbVsvYLJvNTFFsS";
         const STAFF_PASSCODE = "486970"; 
@@ -156,14 +156,32 @@
             document.getElementById('status').innerText = "Cloud Active";
         }
 
-        // --- LOGIC ---
+        // --- STAFF LOGIC ---
         function toggleStaff() {
             if(!isStaff && prompt("STAFF KEY:") === STAFF_PASSCODE) isStaff = true;
             else if(isStaff) isStaff = false;
             document.body.classList.toggle('is-staff', isStaff);
             document.getElementById('staff-indicator').style.background = isStaff ? '#00ffff' : '';
+            renderSidebar();
+            if(activeIdx !== null) renderVictors();
         }
 
+        async function deleteLevel(idx, event) {
+            event.stopPropagation();
+            if(!confirm("Are you sure you want to delete this level forever?")) return;
+            db.levels.splice(idx, 1);
+            await syncToCloud();
+            location.reload();
+        }
+
+        async function removeVictor(vIdx) {
+            if(!confirm("Remove this victor from the list?")) return;
+            db.levels[activeIdx].victors.splice(vIdx, 1);
+            await syncToCloud();
+            renderVictors();
+        }
+
+        // --- FILE HANDLING ---
         function handleFile(input, type) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -174,8 +192,11 @@
             reader.readAsDataURL(input.files[0]);
         }
 
+        // --- SAVE FUNCTIONS ---
         async function saveLevel() {
-            document.getElementById('save-btn').innerText = "UPLOADING...";
+            const btn = document.getElementById('save-btn');
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
             const ver = document.getElementById('in-ver').value;
             if(tempIcon) db.profiles[ver] = tempIcon;
             db.levels.push({
@@ -193,7 +214,9 @@
         }
 
         async function confirmVictor() {
-            document.getElementById('vic-btn').innerText = "UPLOADING...";
+            const btn = document.getElementById('vic-btn');
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
             const name = document.getElementById('vic-name').value;
             if(tempIcon) db.profiles[name] = tempIcon;
             db.levels[activeIdx].victors.push(name);
@@ -201,6 +224,7 @@
             location.reload();
         }
 
+        // --- RENDERERS ---
         function showLvl(idx) {
             activeIdx = idx;
             const l = db.levels[idx];
@@ -212,7 +236,7 @@
             document.getElementById('v-desc').innerText = l.desc;
             document.getElementById('v-player').src = l.video;
             document.getElementById('v-thumb').src = l.thumb;
-            document.getElementById('v-ver-icon').src = db.profiles[l.ver];
+            document.getElementById('v-ver-icon').src = db.profiles[l.ver] || '';
             document.getElementById('v-styles').innerHTML = l.styles.map(s => `<span class="style-tag">${s}</span>`).join('');
             renderVictors();
         }
@@ -221,18 +245,27 @@
             const s = document.getElementById('lvl-search').value.toLowerCase();
             document.getElementById('sidebar-content').innerHTML = db.levels.map((l, i) => {
                 if(s && !l.name.toLowerCase().includes(s)) return '';
-                return `<div onclick="showLvl(${i})" class="glass p-3 rounded-xl cursor-pointer hover:bg-white/5 transition flex justify-between items-center">
-                    <p class="font-black uppercase italic text-[10px]">${l.name}</p>
-                    <span class="text-[9px] opacity-40 font-bold">${l.pts}</span>
+                return `<div onclick="showLvl(${i})" class="glass p-3 rounded-xl cursor-pointer hover:bg-white/5 transition flex justify-between items-center group">
+                    <div>
+                        <p class="font-black uppercase italic text-[10px]">${l.name}</p>
+                        <p class="text-[8px] opacity-30 font-bold uppercase">${l.ver}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] opacity-40 font-bold">${l.pts}</span>
+                        <button onclick="deleteLevel(${i}, event)" class="staff-only text-red-500 hover:text-red-400 font-bold text-[10px] ml-2">✕</button>
+                    </div>
                 </div>`;
             }).join('');
         }
 
         function renderVictors() {
-            document.getElementById('v-victors').innerHTML = db.levels[activeIdx].victors.map(v => `
-                <div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
-                    <img src="${db.profiles[v]}" class="player-icon !w-5 !h-5">
-                    <span class="text-[10px] font-bold uppercase">${v}</span>
+            document.getElementById('v-victors').innerHTML = db.levels[activeIdx].victors.map((v, i) => `
+                <div class="flex items-center justify-between bg-white/5 p-2 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <img src="${db.profiles[v] || ''}" class="player-icon !w-5 !h-5">
+                        <span class="text-[10px] font-bold uppercase">${v}</span>
+                    </div>
+                    <button onclick="removeVictor(${i})" class="staff-only text-red-500 text-[8px] font-bold">REMOVE</button>
                 </div>
             `).join('');
         }
@@ -248,7 +281,7 @@
                 <div class="glass p-4 rounded-2xl flex justify-between items-center">
                     <div class="flex items-center gap-4">
                         <span class="opacity-20 font-black">#${i+1}</span>
-                        <img src="${db.profiles[p[0]]}" class="player-icon">
+                        <img src="${db.profiles[p[0]] || ''}" class="player-icon">
                         <span class="font-black uppercase text-sm">${p[0]}</span>
                     </div>
                     <span class="font-black text-cyan-400">${p[1]} PTS</span>
